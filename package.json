@@ -3,11 +3,12 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "MERIDIAN — a photoreal first-person escape room",
+  "description": "MERIDIAN \u2014 a photoreal first-person escape room",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "bash scripts/deploy.sh"
   },
   "dependencies": {
     "three": "^0.170.0"

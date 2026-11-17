@@ -14,7 +14,7 @@ from mathutils import Vector
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "bake_src", "scene.glb")
 LIGHTS = os.path.join(ROOT, "bake_src", "lights.json")
-OUT = os.path.join(ROOT, "public", "bake")
+OUT = os.path.join(ROOT, "docs", "bake")
 os.makedirs(OUT, exist_ok=True)
 
 RES_X = int(os.environ.get("BAKE_W", 1024))

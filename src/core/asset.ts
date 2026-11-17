@@ -1,9 +1,11 @@
 /**
  * Static asset URL.
  *
- * Everything lives under `public/`, so a build served from a sub-path (GitHub
- * Pages) needs the base prefix. `import.meta.env.BASE_URL` is "/" in dev and
- * "/<repo>/" in the Pages build — see vite.config.ts.
+ * Textures, HDRs and bakes live in `docs/` because that folder *is* the
+ * published site root on GitHub Pages. In dev Vite serves the project root, so
+ * the path needs the `docs/` prefix; in a build the folder is the root and only
+ * the base prefix is needed (`/` locally, `/<repo>/` on Pages).
  */
-export const asset = (path: string) =>
-  `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
+const prefix = import.meta.env.DEV ? "/docs/" : import.meta.env.BASE_URL;
+
+export const asset = (path: string) => `${prefix}${path.replace(/^\/+/, "")}`;
