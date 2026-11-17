@@ -71,12 +71,21 @@ async function boot() {
   const canvas = document.createElement("canvas");
   document.body.appendChild(canvas);
 
-  const renderer = new THREE.WebGLRenderer({
-    canvas,
-    antialias: false,
-    powerPreference: "high-performance",
-    stencil: false,
-  });
+  let renderer: THREE.WebGLRenderer;
+  try {
+    renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: false,
+      powerPreference: "high-performance",
+      stencil: false,
+    });
+  } catch {
+    bootBar.style.width = "0%";
+    bootStatus.innerHTML =
+      "<span style='color:#c96'>This browser has no WebGL2.</span><br />" +
+      "<span style='color:#6b6559'>Try a current Chrome, Edge, Firefox or Safari.</span>";
+    return;
+  }
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
   renderer.setSize(innerWidth, innerHeight);
   renderer.shadowMap.enabled = true;
@@ -349,9 +358,11 @@ async function boot() {
     if (started && document.pointerLockElement !== canvas) canvas.requestPointerLock();
   });
 
+  const lockHint = document.getElementById("lockhint");
   document.addEventListener("pointerlockchange", () => {
     const locked = document.pointerLockElement === canvas;
     document.body.style.cursor = locked ? "none" : "default";
+    lockHint?.classList.toggle("on", started && !locked && !ui.inspecting);
   });
 
   document.addEventListener("mousemove", (e) => {
