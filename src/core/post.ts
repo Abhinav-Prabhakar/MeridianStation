@@ -631,6 +631,12 @@ export class PostChain {
     camera.projectionMatrix.elements[9] += (jy * 2) / this.h;
     camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
 
+    // The previous frame left the depth texture of this target bound to a
+    // sampler (SSAO reads it). Drawing into the target while that texture is
+    // still bound is a framebuffer feedback loop — GL warns and the driver
+    // slows down. One state reset per frame is cheaper than chasing units.
+    r.state.reset();
+
     r.setRenderTarget(this.rtScene);
     r.clear();
     r.render(scene, camera);
