@@ -333,7 +333,7 @@ async function boot() {
     innerHeight * renderer.getPixelRatio()
   );
   post.setSize(innerWidth * renderer.getPixelRatio(), innerHeight * renderer.getPixelRatio());
-  post.exposure = 1.0;
+  post.exposure = 0.9;
   post.bloom = 0.42;
 
   // ---- dust motes

@@ -149,7 +149,7 @@ void main(){
   col *= ao;
 
   // two-scale bloom: a tight core plus a wide haze, modulated by lens dirt
-  vec3 bloom = texture2D(tBloom, uv).rgb * 0.72 + texture2D(tBloomWide, uv).rgb * 1.05;
+  vec3 bloom = texture2D(tBloom, uv).rgb * 0.75 + texture2D(tBloomWide, uv).rgb * 0.08;
   float dirt = texture2D(tDirt, uv).r;
   col += bloom * uBloom * (0.75 + 1.6 * dirt);
 
@@ -434,7 +434,7 @@ export class PostChain {
       fragmentShader: BRIGHT_FRAG,
       uniforms: {
         tDiffuse: { value: null },
-        uThreshold: { value: 1.0 },
+        uThreshold: { value: 1.18 },
         uKnee: { value: 0.45 },
       },
       depthTest: false,
@@ -471,7 +471,7 @@ export class PostChain {
         uCA: { value: 0.0012 },
         uTime: { value: 0 },
         uSaturation: { value: 0.99 },
-        uContrast: { value: 0.26 },
+        uContrast: { value: 0.3 },
         uLift: { value: 0.0 },
         uTint: { value: new THREE.Color(1, 1, 1) },
       },
