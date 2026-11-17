@@ -152,12 +152,19 @@ void main(){
   col *= uTint;
 
   col = ACESFilm(col);
-
-  // gentle filmic grade
   col = pow(col, vec3(1.0 / 2.2));
+
+  // split tone: cool toes, warm shoulders. This is what separates a film scan
+  // from a sepia wash — shadows go blue, highlights go amber.
   float l = luma(col);
+  vec3 tone = mix(vec3(0.90, 0.965, 1.065), vec3(1.06, 1.0, 0.92), smoothstep(0.02, 0.72, l));
+  col *= tone;
+
+  // filmic S-curve
+  col = mix(col, col * col * (3.0 - 2.0 * col), uContrast);
+
+  l = luma(col);
   col = mix(vec3(l), col, uSaturation);
-  col = mix(col, col * col * (3.0 - 2.0 * col), uContrast * 0.5 + 0.5) * 0.0 + mix(col, smoothstep(0.0, 1.0, col), uContrast * 0.35);
   col += uLift * (1.0 - col) * 0.06;
 
   // vignette
@@ -307,8 +314,8 @@ export class PostChain {
         uGrain: { value: 0.055 },
         uCA: { value: 0.0012 },
         uTime: { value: 0 },
-        uSaturation: { value: 1.04 },
-        uContrast: { value: 0.12 },
+        uSaturation: { value: 0.99 },
+        uContrast: { value: 0.26 },
         uLift: { value: 0.0 },
         uTint: { value: new THREE.Color(1, 1, 1) },
       },

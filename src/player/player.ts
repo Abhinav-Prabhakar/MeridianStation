@@ -30,7 +30,7 @@ export class Player {
 
   constructor(camera: THREE.PerspectiveCamera, scene: THREE.Scene) {
     this.camera = camera;
-    this.flashlight = new THREE.SpotLight(0xffdcb0, 13, 20, 0.56, 0.78, 1.5);
+    this.flashlight = new THREE.SpotLight(0xffdcb0, 5.5, 15, 0.46, 0.85, 1.7);
     this.flashlight.castShadow = true;
     this.flashlight.shadow.mapSize.set(1024, 1024);
     this.flashlight.shadow.bias = -0.0009;
@@ -130,7 +130,7 @@ export class Player {
     this.eyeY += (targetEye - this.eyeY) * Math.min(1, dt * 10);
     this.syncCamera(dt);
 
-    this.flashlight.intensity = this.flashOn ? 13 : 0;
+    this.flashlight.intensity = this.flashOn ? 5.5 : 0;
     this.flashlight.visible = true;
   }
 

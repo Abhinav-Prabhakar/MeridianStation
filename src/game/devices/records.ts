@@ -171,35 +171,44 @@ export function buildRecords(ctx: Ctx) {
   });
 
   // ------------------------------------------------------------ wall safe
+  const SW = 1.16;
+  const SH = 0.92;
   const safe = new THREE.Group();
-  safe.position.set(R.x1 - 0.2, 1.32, -17.4);
+  safe.position.set(R.x1 - 0.24, 1.4, -17.4);
   safe.rotation.y = -Math.PI / 2;
   kit.root.add(safe);
 
-  // body: four sides + back, open to the room
-  safe.add(box(kit, 0.96, 0.76, 0.06, "steelDark", 0, 0, -0.3));
-  safe.add(box(kit, 0.06, 0.76, 0.36, "steelDark", -0.45, 0, -0.12));
-  safe.add(box(kit, 0.06, 0.76, 0.36, "steelDark", 0.45, 0, -0.12));
-  safe.add(box(kit, 0.96, 0.06, 0.36, "steelDark", 0, 0.35, -0.12));
-  safe.add(box(kit, 0.96, 0.06, 0.36, "steelDark", 0, -0.35, -0.12));
-  safe.add(box(kit, 0.84, 0.64, 0.3, "felt", 0, 0, -0.14));
+  // cavity: back, sides, top, bottom, linings
+  safe.add(box(kit, SW + 0.16, SH + 0.16, 0.1, "steelDark", 0, 0, -0.38));
+  safe.add(box(kit, 0.08, SH + 0.16, 0.46, "steelDark", -(SW / 2 + 0.04), 0, -0.16));
+  safe.add(box(kit, 0.08, SH + 0.16, 0.46, "steelDark", SW / 2 + 0.04, 0, -0.16));
+  safe.add(box(kit, SW + 0.16, 0.08, 0.46, "steelDark", 0, SH / 2 + 0.04, -0.16));
+  safe.add(box(kit, SW + 0.16, 0.08, 0.46, "steelDark", 0, -(SH / 2 + 0.04), -0.16));
+  safe.add(box(kit, SW + 0.02, SH + 0.02, 0.36, "black", 0, 0, -0.2));
+  safe.add(box(kit, SW - 0.04, SH - 0.04, 0.3, "felt", 0, 0, -0.16));
+
+  // the lip of the recess, so it reads as a safe built into the brick
+  safe.add(box(kit, SW + 0.24, 0.07, 0.16, "steelPale", 0, SH / 2 + 0.12, 0.03));
+  safe.add(box(kit, SW + 0.24, 0.07, 0.16, "steelPale", 0, -(SH / 2 + 0.12), 0.03));
+  safe.add(box(kit, 0.07, SH + 0.24, 0.16, "steelPale", -(SW / 2 + 0.12), 0, 0.03));
+  safe.add(box(kit, 0.07, SH + 0.24, 0.16, "steelPale", SW / 2 + 0.12, 0, 0.03));
 
   // contents
   const contents = new THREE.Group();
-  contents.position.set(0, 0, -0.16);
+  contents.position.set(0, 0, -0.2);
   safe.add(contents);
   const memo = new THREE.Group();
-  memo.position.set(-0.18, 0.06, 0.06);
+  memo.position.set(-0.2, 0.05, 0.04);
   memo.rotation.z = 0.06;
   contents.add(memo);
-  memo.add(box(kit, 0.22, 0.005, 0.3, "paper", 0, 0, 0));
+  memo.add(box(kit, 0.24, 0.005, 0.32, "paper", 0, 0, 0));
   const tokenA = new THREE.Group();
-  tokenA.position.set(0.16, 0.03, 0.05);
+  tokenA.position.set(0.24, 0.02, 0.03);
   tokenA.rotation.x = -Math.PI / 2;
   contents.add(tokenA);
   tokenA.add(token(kit, "cross", "7"));
   const key = new THREE.Group();
-  key.position.set(0.0, -0.18, 0.08);
+  key.position.set(0.02, -0.22, 0.05);
   key.rotation.y = 0.5;
   contents.add(key);
   key.add(box(kit, 0.02, 0.006, 0.16, "brass", 0, 0, 0));
@@ -207,55 +216,61 @@ export function buildRecords(ctx: Ctx) {
   for (let i = 0; i < 3; i++) key.add(box(kit, 0.014, 0.006, 0.02, "brass", -0.02, 0, -0.06 + i * 0.028));
   contents.visible = false;
 
-  // door on a hinge
+  // door on a hinge at the left edge
   const door = new THREE.Group();
-  door.position.set(-0.46, 0, 0.03);
+  door.position.set(-SW / 2, 0, 0.05);
   safe.add(door);
-  door.add(box(kit, 0.92, 0.72, 0.07, "steel", 0.46, 0, 0));
-  door.add(box(kit, 0.84, 0.64, 0.02, "steelPale", 0.46, 0, 0.045));
-  door.add(cyl(kit, 0.02, 0.06, "brass", 0.1, 0, 0.06, 10, { z: Math.PI / 2 }));
-  door.add(cyl(kit, 0.02, 0.06, "brass", 0.82, 0, 0.06, 10, { z: Math.PI / 2 }));
+  door.add(box(kit, SW, SH, 0.06, "steel", SW / 2, 0, 0));
+  door.add(box(kit, SW - 0.12, SH - 0.12, 0.02, "steelPale", SW / 2, 0, 0.04));
+  door.add(cyl(kit, 0.03, 0.05, "brass", 0.05, 0, 0.03, 10, { z: Math.PI / 2 }));
 
   // number wheels
   const digits = SAFE_CODE.split("").map(() => 0);
-  const digitMeshes: THREE.Mesh[] = [];
   const digitTexts: { set: (d: number) => void }[] = [];
 
   for (let i = 0; i < 4; i++) {
-    const wx = 0.22 + i * 0.11;
+    const wx = 0.2 + i * 0.16;
     const wheel = new THREE.Group();
-    wheel.position.set(wx, -0.02, 0.06);
+    wheel.position.set(wx, -0.07, 0.06);
     door.add(wheel);
-    wheel.add(cyl(kit, 0.048, 0.02, "brass", 0, 0, 0, 18, { x: Math.PI / 2 }));
-    wheel.add(cyl(kit, 0.036, 0.026, "bakelite", 0, 0, 0.012, 16, { x: Math.PI / 2 }));
+    wheel.add(cyl(kit, 0.062, 0.022, "brass", 0, 0, 0, 20, { x: Math.PI / 2 }));
+    wheel.add(cyl(kit, 0.05, 0.028, "black", 0, 0, 0.012, 18, { x: Math.PI / 2 }));
 
     const c = document.createElement("canvas");
-    c.width = 64;
-    c.height = 64;
+    c.width = 96;
+    c.height = 96;
     const g2 = c.getContext("2d")!;
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 4;
     const drawDigit = (d: number) => {
-      g2.fillStyle = "#0d0c0a";
-      g2.fillRect(0, 0, 64, 64);
-      g2.fillStyle = "#f3e9cc";
-      g2.font = '600 46px "Courier New", monospace';
+      g2.fillStyle = "#0b0a08";
+      g2.fillRect(0, 0, 96, 96);
+      g2.fillStyle = "#f6ecce";
+      g2.font = '600 66px "Courier New", monospace';
       g2.textAlign = "center";
-      g2.fillText(String(d), 32, 48);
+      g2.fillText(String(d), 48, 74);
       tex.needsUpdate = true;
     };
     drawDigit(0);
     digitTexts.push({ set: drawDigit });
 
-    const face = mesh(kit, new THREE.PlaneGeometry(0.045, 0.045), new THREE.MeshStandardMaterial({
-      map: tex,
-      emissiveMap: tex,
-      emissive: new THREE.Color(0xffffff),
-      emissiveIntensity: 0.55,
-      roughness: 0.6,
-    }), 0, 0, 0.028);
+    const face = mesh(
+      kit,
+      new THREE.PlaneGeometry(0.058, 0.058),
+      new THREE.MeshStandardMaterial({
+        map: tex,
+        emissiveMap: tex,
+        emissive: new THREE.Color(0xffffff),
+        emissiveIntensity: 0.42,
+        roughness: 0.6,
+      }),
+      0,
+      0,
+      0.03
+    );
+    face.castShadow = false;
     wheel.add(face);
-    digitMeshes.push(face);
 
     let holdAcc = 0;
     interact.add({
@@ -282,11 +297,11 @@ export function buildRecords(ctx: Ctx) {
 
   // handle
   const handle = new THREE.Group();
-  handle.position.set(0.78, -0.02, 0.08);
+  handle.position.set(1.0, -0.07, 0.05);
   door.add(handle);
-  const bar = box(kit, 0.045, 0.22, 0.045, "brass", 0, 0, 0.03);
-  handle.add(bar);
-  handle.add(cyl(kit, 0.055, 0.05, "brassDark", 0, 0, 0, 16, { x: Math.PI / 2 }));
+  handle.add(cyl(kit, 0.075, 0.05, "brassDark", 0, 0, 0.02, 16, { x: Math.PI / 2 }));
+  handle.add(box(kit, 0.05, 0.2, 0.05, "brass", 0, 0, 0.06));
+  handle.add(cyl(kit, 0.034, 0.06, "bakeliteBrown", 0, 0.1, 0.07, 12));
 
   let doorT = 0;
   let doorTarget = 0;

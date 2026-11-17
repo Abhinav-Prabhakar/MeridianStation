@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { Kit } from "../core/kit";
-import { ROOMS } from "./layout";
+import { ROOMS, bearing } from "./layout";
 import {
   PB,
   bucket,
@@ -81,15 +81,25 @@ export function buildLights(scene: THREE.Scene): ZoneRig[] {
       const a = (i * Math.PI * 2) / 3 + 0.6;
       const x = Math.sin(a) * 3.0;
       const z = -Math.cos(a) * 3.0;
-      // bare opal globes: omnidirectional, so the octagon walls are lit too
-      pend.push(point(0xffcf9c, 26, 17, x, 4.55, z));
-      pend.push(point(0xffc78f, 1.6, 3.0, x, 4.9, z));
+      // bare opal globes: a small warm point for the ceiling haze, plus a
+      // downward spot so the walls get a real gradient instead of a flat wash
+      pend.push(point(0xffdcbb, 5.5, 9, x, 4.35, z));
+      pend.push(point(0xffd8b2, 1.4, 2.4, x, 4.85, z));
+      pend.push(spot(0xffdcbc, 44, 9.5, 0.55, 0.88, x, 4.7, z, x, 0, z));
     }
     // one shadow caster so the pillars throw real shadows across the floor
     pend.push(spot(0xffd2a4, 26, 12, 0.95, 0.95, 0.9, 4.72, 1.25, 0.9, 0, 1.25, true, 1024));
-    const fill = point(0xffd9b4, 2.6, 10, 0, 3.2, 0);
+    // door lamp: the blast door is the hero of the room, so it gets its own
+    // fixture washing it from above and throwing the crank's shadow below
+    const dd = bearing(Math.PI / 4);
+    pend.push(
+      spot(0xffd6b0, 17, 5.5, 0.9, 0.75, dd[0] * 4.95, 2.95, dd[1] * 4.95, dd[0] * 5.9, 1.25, dd[1] * 5.9, true, 1024)
+    );
+    const fill = point(0xffe2c6, 2.0, 10, 0, 3.2, 0);
+    // a cold fill from the vents: keeps the shadows from going pure sepia
+    const hemi = new THREE.HemisphereLight(0x4a5f78, 0x1b140e, 0.32);
     const leak = spot(0x8fb4ff, 26, 9, 0.42, 0.62, 4.15, 0.3, -4.15, 2.0, 1.2, -2.0, true, 512);
-    add("rotunda", [...pend, fill, leak]);
+    add("rotunda", [...pend, fill, hemi, leak]);
   }
 
   // ---- corridors --------------------------------------------------------
@@ -102,13 +112,17 @@ export function buildLights(scene: THREE.Scene): ZoneRig[] {
 
   // ---- records ----------------------------------------------------------
   {
-    const t1 = spot(0xcfe0f2, 46, 7, 1.15, 0.85, -1.6, 3.42, -14.2, -1.6, 0, -14.2, true, 1024);
-    const t2 = spot(0xcfe0f2, 40, 7, 1.15, 0.85, 1.6, 3.42, -18.0, 1.6, 0, -18.0, false);
-    const lamp = point(0xffab52, 5.5, 3.6, 0.2, 1.16, -16.1);
+    const t1 = spot(0xcfe0f2, 74, 8, 1.15, 0.85, -1.6, 3.42, -14.2, -1.6, 0, -14.2, true, 1024);
+    const t3 = spot(0xd6e6f4, 52, 8, 1.1, 0.88, 0, 3.42, -16.2, 0, 0, -16.2);
+    const t2 = spot(0xcfe0f2, 60, 8, 1.15, 0.85, 1.6, 3.42, -18.0, 1.6, 0, -18.0, false);
+    const lamp = point(0xffab52, 14, 4.6, 0.2, 1.16, -16.1);
     const reader = point(0xffbe78, 1.6, 2.2, -3.5, 1.2, -14.1);
-    add("records", [t1, t2, lamp, reader], (t) => {
+    const amb = point(0xffe2c8, 11, 15, 0, 2.7, -16.0);
+    // bracket lamp over the wall safe so the wheels read from across the room
+    const safeLamp = spot(0xffca96, 8, 3.2, 0.85, 0.8, 4.25, 2.72, -17.4, 5.0, 1.35, -17.4);
+    add("records", [t1, t2, t3, lamp, reader, safeLamp, amb], (t) => {
       const flick = t % 17 < 0.12 || (t % 17 > 0.6 && t % 17 < 0.68);
-      t1.intensity = flick ? 12 : 46;
+      t1.intensity = flick ? 16 : 74;
     });
   }
 
@@ -121,10 +135,13 @@ export function buildLights(scene: THREE.Scene): ZoneRig[] {
 
   // ---- anechoic ---------------------------------------------------------
   {
-    const w1 = spot(0xffc78f, 26, 6, 0.62, 0.5, 13.6, 2.45, -3.2, 14.6, 0, 0.4, true, 1024);
-    const w2 = spot(0xffc78f, 22, 6, 0.62, 0.5, 19.6, 2.45, 3.0, 18.4, 0, -0.8, false);
+    // wall washers raking down the wedge fields, so the cones read as cones
+    const w1 = spot(0xffd6b0, 40, 6.5, 0.7, 0.55, 13.0, 3.7, -2.6, 12.4, 1.1, -2.6, true, 1024);
+    const w2 = spot(0xffd6b0, 34, 6.5, 0.7, 0.55, 13.0, 3.7, 2.4, 12.4, 1.1, 2.4, false);
+    const w3 = spot(0xffd0a4, 34, 6.5, 0.7, 0.55, 20.0, 3.7, -2.6, 20.6, 1.1, -2.6, false);
+    const w4 = spot(0xffd0a4, 30, 6.5, 0.7, 0.55, 20.0, 3.7, 2.4, 20.6, 1.1, 2.4, false);
     const scope = point(0x5cff9e, 0.9, 1.8, 18.7, 1.05, -2.35);
-    add("anechoic", [w1, w2, scope]);
+    add("anechoic", [w1, w2, w3, w4, scope]);
   }
 
   // ---- machine ----------------------------------------------------------
@@ -132,8 +149,10 @@ export function buildLights(scene: THREE.Scene): ZoneRig[] {
     const f1 = spot(0xc4d6ea, 52, 9, 1.0, 0.7, -2.4, 4.62, 14.4, -2.4, 0, 14.4, true, 1024);
     const f2 = spot(0xc4d6ea, 40, 9, 1.0, 0.7, 2.2, 4.62, 18.8, 2.2, 0, 18.8, false);
     const bench = point(0xffa855, 4.2, 4.2, -3.4, 1.35, 19.3);
+    // cage lamp over the valve gallery on the east wall
+    const valves = spot(0xffd0a0, 26, 6, 0.9, 0.85, 4.4, 4.0, 15.4, 5.4, 1.7, 15.4, true, 1024);
     const god = spot(0xa8c8ff, 70, 11, 0.26, 0.85, 3.6, 4.85, 18.6, 3.0, 0, 16.9, true, 1024);
-    add("machine", [f1, f2, bench, god], (t) => {
+    add("machine", [f1, f2, bench, god, valves], (t) => {
       const flick = t % 11 < 0.22 || (t % 11 > 1.05 && t % 11 < 1.13);
       f2.intensity = flick ? 9 : 40;
     });
@@ -141,9 +160,11 @@ export function buildLights(scene: THREE.Scene): ZoneRig[] {
 
   // ---- darkroom ---------------------------------------------------------
   {
-    const safe = point(0xff2a0c, 1.9, 4.2, -15.5, 2.5, 1.62);
-    const safe2 = point(0xff2a0c, 0.7, 3.4, -15.5, 2.5, -1.6);
-    add("darkroom", [safe, safe2]);
+    const safe = point(0xff2a0c, 5.4, 5.0, -15.5, 2.5, 1.62);
+    const safe2 = point(0xff2a0c, 2.6, 4.2, -15.5, 2.5, -1.6);
+    // dim work light over the developing bench so the trays read
+    const bench = point(0xff5a30, 1.5, 2.6, -15.6, 1.6, -2.3);
+    add("darkroom", [safe, safe2, bench]);
   }
 
   // ---- tunnel -----------------------------------------------------------
@@ -258,13 +279,29 @@ function recordsProps(kit: Kit) {
   chair(kit, 1.3, -17.0, -0.6);
   papers(kit, 0.7, 0.79, -16.2, 7, 0.5, 0.1);
 
-  // banker's lamp
-  const lamp = new PB(kit, 0.0, 0.78, -16.0, 0.2);
-  lamp.c(0.09, 0.11, 0.03, "brass", 0, 0.015, 0, 14);
-  lamp.c(0.012, 0.012, 0.34, "brass", 0, 0.18, 0, 8);
-  const shade = lamp.b(0.3, 0.1, 0.16, "brass", 0, 0.36, 0);
-  shade.rotation.z = 0.06;
-  lamp.b(0.26, 0.02, 0.12, "bulb", 0, 0.345, 0);
+  // banker's lamp — built from explicit meshes so the shade reads as a cone
+  {
+    const lamp = new THREE.Group();
+    lamp.position.set(0, 0.78, -16.0);
+    kit.root.add(lamp);
+    const add = (geo: THREE.BufferGeometry, mat: string) => {
+      const m = new THREE.Mesh(geo, kit.m(mat));
+      m.castShadow = true;
+      m.receiveShadow = true;
+      lamp.add(m);
+      return m;
+    };
+    add(new THREE.CylinderGeometry(0.1, 0.12, 0.03, 20), "brass").position.y = 0.015;
+    add(new THREE.CylinderGeometry(0.014, 0.014, 0.36, 8), "brass").position.y = 0.2;
+    const shadeMat = kit.m("brassDark").clone();
+    shadeMat.side = THREE.DoubleSide;
+    const shade = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.2, 24, 1, true), shadeMat);
+    shade.position.y = 0.44;
+    shade.castShadow = true;
+    lamp.add(shade);
+    add(new THREE.SphereGeometry(0.062, 14, 10), "bulb").position.y = 0.4;
+    add(new THREE.CylinderGeometry(0.06, 0.06, 0.02, 12), "brass").position.y = 0.325;
+  }
 
   // adding machine
   const add = new PB(kit, -1.9, 0.78, -15.6, -0.5);
@@ -299,7 +336,7 @@ function recordsProps(kit: Kit) {
   mr.b(0.3, 0.2, 0.03, "glassDirty", 0, 0.36, -0.16);
   mr.c(0.08, 0.08, 0.02, "bakelite", 0.2, 0.24, 0.1, 10, { z: Math.PI / 2 });
 
-  shelf(kit, 3.6, -17.6, 0, 1.6, 1.9, 0.34, 5);
+  shelf(kit, 4.6, -13.0, Math.PI / 2, 1.5, 1.9, 0.32, 5);
   shelf(kit, -4.7, -12.9, 0, 1.4, 1.9, 0.34, 5);
 
   // pneumatic tube station

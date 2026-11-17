@@ -48,7 +48,7 @@ export class BakedEnv {
   private pending = new Map<string, Promise<THREE.Texture | null>>();
   private currentFile = "";
   private fade = 1;
-  private base = 0.3;
+  private base = 0.24;
 
   constructor(
     renderer: THREE.WebGLRenderer,

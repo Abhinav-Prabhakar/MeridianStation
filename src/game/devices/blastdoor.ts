@@ -49,8 +49,22 @@ export function buildBlastDoor(ctx: Ctx) {
       g.add(cyl(kit, 0.022, 0.026, "rustDark", s * 1.44, 0.22 + i * 0.36, 0.02, 10, { x: Math.PI / 2 }));
     }
   }
-  // hazard skirt
-  g.add(box(kit, 2.9, 0.16, 0.06, "rustDark", 0, 0.12, 0.05));
+  // rivets down both edges of the leaf
+  for (let i = 0; i < 6; i++) {
+    for (const s of [-1, 1]) {
+      g.add(cyl(kit, 0.019, 0.02, "steelPale", s * 1.09, 0.34 + i * 0.36, 0.145, 8, { x: Math.PI / 2 }));
+    }
+  }
+  // hazard skirt + chevrons
+  g.add(box(kit, 2.94, 0.2, 0.07, "rustDark", 0, 0.12, 0.055));
+  for (let i = 0; i < 9; i++) {
+    const mat = i % 2 === 0 ? "brassDark" : "black";
+    g.add(box(kit, 0.13, 0.13, 0.012, mat, -1.28 + i * 0.32, 0.12, 0.095));
+  }
+
+  // bulkhead fixture above the frame (the light itself lives in the rig)
+  g.add(cyl(kit, 0.1, 0.11, "steelDark", 0, 2.62, 0.06, 14, { x: Math.PI / 2 }));
+  g.add(cyl(kit, 0.078, 0.04, "bulb", 0, 2.62, 0.12, 14, { x: Math.PI / 2 }));
 
   const title = brassPlate(kit, 0.9, 0.1, ["CHANNEL PATCHING", "BY SYMBOL ONLY"], 0, 1.94, 0.145);
   g.add(title);

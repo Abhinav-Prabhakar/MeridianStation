@@ -148,14 +148,20 @@ export function table(kit: Kit, x: number, z: number, w: number, d: number, h = 
 }
 
 // ------------------------------------------------------------------ chair
-export function chair(kit: Kit, x: number, z: number, rot = 0, mat = "wood") {
+export function chair(kit: Kit, x: number, z: number, rot = 0, mat = "leather") {
+  // institutional stacking chair: welded tube frame, vinyl pad, plywood shell
   const p = new PB(kit, x, 0, z, rot);
-  p.b(0.44, 0.05, 0.44, mat, 0, 0.45, 0, 0, 1.2);
-  p.b(0.44, 0.5, 0.04, mat, 0, 0.72, -0.2, 0, 1.2);
-  p.b(0.42, 0.35, 0.04, "fabric", 0, 0.68, -0.17, 0, 1);
-  for (const sx of [-1, 1])
-    for (const sz of [-1, 1])
-      p.b(0.035, 0.45, 0.035, mat, sx * 0.18, 0.225, sz * 0.18);
+  p.b(0.43, 0.07, 0.42, "wood", 0, 0.44, 0, 0, 1.2);
+  p.b(0.37, 0.045, 0.36, mat, 0, 0.48, 0.01, 0, 1.2);
+  p.b(0.4, 0.42, 0.03, "wood", 0, 0.72, -0.2, 0, 1.2);
+  p.b(0.34, 0.34, 0.035, mat, 0, 0.72, -0.175, 0, 1);
+  for (const sx of [-1, 1]) {
+    p.b(0.028, 0.44, 0.028, "steelDark", sx * 0.19, 0.22, -0.16);
+    p.b(0.028, 0.44, 0.028, "steelDark", sx * 0.19, 0.22, 0.16);
+    p.b(0.028, 0.028, 0.34, "steelDark", sx * 0.19, 0.05, 0);
+  }
+  // the welded back hoop
+  p.b(0.41, 0.028, 0.028, "steelDark", 0, 0.93, -0.2);
   p.shadow(0.34, 0.34);
   return p.g;
 }
@@ -263,9 +269,9 @@ export function shelf(
 // ----------------------------------------------------------------- crate
 export function crate(kit: Kit, x: number, y: number, z: number, s = 0.6, rot = 0) {
   const p = new PB(kit, x, y, z, rot);
-  p.b(s, s, s, "wood", 0, s / 2, 0, 0, 0.8);
+  p.b(s, s, s, "woodDark", 0, s / 2, 0, 0, 0.8);
   for (const sy of [0.12, 0.88]) {
-    p.b(s + 0.01, 0.06, s + 0.01, "wood", 0, s * sy, 0, 0, 0.8);
+    p.b(s + 0.01, 0.06, s + 0.01, "woodDark", 0, s * sy, 0, 0, 0.8);
   }
   p.b(s * 0.8, 0.02, 0.1, "rustDark", 0, s + 0.005, 0);
   p.shadow(s * 0.6, s * 0.6, -y + 0.006);
