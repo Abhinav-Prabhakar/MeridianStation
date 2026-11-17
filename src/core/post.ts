@@ -634,6 +634,8 @@ export class PostChain {
     r.setRenderTarget(this.rtScene);
     r.clear();
     r.render(scene, camera);
+    this.stats.calls = r.info.render.calls;
+    this.stats.tris = r.info.render.triangles;
     if (overlay) {
       // the overlay is authored in *camera space*, so it needs a camera at the
       // origin with the world camera's projection — not the world camera itself
@@ -652,8 +654,6 @@ export class PostChain {
       r.render(overlay, oc);
       r.autoClear = true;
     }
-    this.stats.calls = r.info.render.calls;
-    this.stats.tris = r.info.render.triangles;
 
     // --- SSAO
     const au = this.aoMat.uniforms;

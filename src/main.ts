@@ -351,14 +351,24 @@ async function boot() {
   let fps = 60;
   void lastTime;
 
-  const resize = () => {
-    const dpr = Math.min(devicePixelRatio, 1.5);
+  /**
+   * Dynamic resolution. A retina laptop asks for 3360 × 1754, and the post
+   * chain (SSAO + two bloom scales + DoF + TAA) is fill-bound long before it is
+   * geometry-bound. So the canvas keeps a resolution scale that walks between
+   * 0.62 and 1.0 to hold 60 fps; the CSS size never changes, so nothing jumps.
+   */
+  let resScale = 1;
+  const maxDpr = Math.min(devicePixelRatio, 1.5);
+  const applyScale = () => {
+    const dpr = maxDpr * resScale;
     renderer.setPixelRatio(dpr);
     renderer.setSize(innerWidth, innerHeight);
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
     post.setSize(Math.floor(innerWidth * dpr), Math.floor(innerHeight * dpr));
+    post.resetHistory();
   };
+  const resize = () => applyScale();
   addEventListener("resize", resize);
 
   startBtn.addEventListener("click", () => {
@@ -530,6 +540,16 @@ async function boot() {
     statAcc += dt;
     if (statAcc > 0.5) {
       statAcc = 0;
+      // ---- hold the frame rate: walk the render resolution, not the lights
+      if (started) {
+        if (fps < 54 && resScale > 0.62) {
+          resScale = Math.max(0.62, resScale - 0.08);
+          applyScale();
+        } else if (fps > 58.5 && resScale < 1) {
+          resScale = Math.min(1, resScale + 0.04);
+          applyScale();
+        }
+      }
       const info = post.stats;
       hudEl.innerHTML = `${zone ? `<span class="lit">${zone.label}</span><br>` : ""}${fps.toFixed(0)} fps · ${info.calls} calls · ${(info.tris / 1000).toFixed(0)}k tris`;
     }
