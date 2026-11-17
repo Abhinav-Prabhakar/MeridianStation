@@ -1,0 +1,6 @@
+node_modules/
+dist/
+bake_src/
+.DS_Store
+*.log
+public/bake/_preview_*.png
