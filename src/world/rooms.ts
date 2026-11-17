@@ -64,6 +64,7 @@ export function buildLights(scene: THREE.Scene): ZoneRig[] {
     l.position.set(x, y, z);
     l.target.position.set(tx, ty, tz);
     scene.add(l.target);
+    l.userData.wantsShadow = !!shadow;
     if (shadow) {
       l.castShadow = true;
       l.shadow.mapSize.set(mapSize, mapSize);

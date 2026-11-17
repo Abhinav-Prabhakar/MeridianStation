@@ -497,7 +497,13 @@ async function boot() {
     for (const z of want) activeZones.add(z);
     for (const rig of rigs) {
       const on = activeZones.has(rig.zone);
-      for (const l of rig.lights) l.visible = on;
+      // a shadow-casting light re-renders every batch, so only the room you are
+      // actually standing in keeps its shadows; the neighbours keep their glow
+      const shadowHere = on && rig.zone === zone;
+      for (const l of rig.lights) {
+        l.visible = on;
+        if (l.userData.wantsShadow) l.castShadow = shadowHere;
+      }
     }
   }
 
@@ -551,6 +557,8 @@ async function boot() {
         }
       }
       const info = post.stats;
+      if (location.search.includes("dbg"))
+        console.info(`[meridian:stats] fps=${fps.toFixed(1)} res=${resScale.toFixed(2)} calls=${info.calls} tris=${info.tris} started=${started}`);
       hudEl.innerHTML = `${zone ? `<span class="lit">${zone.label}</span><br>` : ""}${fps.toFixed(0)} fps · ${info.calls} calls · ${(info.tris / 1000).toFixed(0)}k tris`;
     }
 

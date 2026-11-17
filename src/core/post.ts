@@ -687,27 +687,29 @@ export class PostChain {
     bu.tDiffuse.value = this.rtBloomB.texture;
     this.blit(this.bloomBlurMat, this.rtBloomA);
 
-    // wide pass: quarter of the quarter, blurred twice more
+    // wide pass: quarter of the quarter, blurred twice more. Each blit writes
+    // to the target it is *not* reading from — reading and writing the same
+    // texture is a framebuffer feedback loop, which silently kills the pass.
     (bu.uTexel.value as THREE.Vector2).set(1 / this.rtBloomC.width, 1 / this.rtBloomC.height);
     (bu.uDir.value as THREE.Vector2).set(1, 0);
     bu.tDiffuse.value = this.rtBloomA.texture;
     this.blit(this.bloomBlurMat, this.rtBloomC);
     (bu.uDir.value as THREE.Vector2).set(0, 1);
     bu.tDiffuse.value = this.rtBloomC.texture;
-    this.blit(this.bloomBlurMat, this.rtBloomC);
-    (bu.uDir.value as THREE.Vector2).set(1, 0);
-    bu.tDiffuse.value = this.rtBloomC.texture;
     this.blit(this.bloomBlurMat, this.rtBloomD);
-    (bu.uDir.value as THREE.Vector2).set(0, 1);
+    (bu.uDir.value as THREE.Vector2).set(1, 0);
     bu.tDiffuse.value = this.rtBloomD.texture;
     this.blit(this.bloomBlurMat, this.rtBloomC);
+    (bu.uDir.value as THREE.Vector2).set(0, 1);
+    bu.tDiffuse.value = this.rtBloomC.texture;
+    this.blit(this.bloomBlurMat, this.rtBloomD);
 
     // --- composite
     const cu = this.compMat.uniforms;
     cu.tScene.value = this.rtScene.texture;
     cu.tAO.value = this.rtAO.texture;
     cu.tBloom.value = this.rtBloomA.texture;
-    cu.tBloomWide.value = this.rtBloomC.texture;
+    cu.tBloomWide.value = this.rtBloomD.texture;
     cu.uTime.value = performance.now() / 1000;
     this.blit(this.compMat, this.rtComp);
 
