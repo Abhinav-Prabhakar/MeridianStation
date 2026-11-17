@@ -47,13 +47,17 @@
 </tr>
 </table>
 
+<img src="docs/shots/rotunda2.jpg" alt="The rotunda, looking up" width="100%" />
+
+<div align="center"><sub><i>The rotunda from the south door — conduit loop, junction boxes, the blast door lamp, and the dome stair beyond.</i></sub></div>
+
 <br />
 
 <table>
 <tr>
 <td align="center" width="25%"><h3>◈</h3><b>Nine rooms</b><br /><sub>rotunda, four wings, a dome, a tunnel</sub></td>
 <td align="center" width="25%"><h3>⌘</h3><b>Four tokens</b><br /><sub>the plugs <i>are</i> the code display</sub></td>
-<td align="center" width="25%"><h3>⏱</h3><b>60 fps</b><br /><sub>30–160 draw calls, 29–67k tris</sub></td>
+<td align="center" width="25%"><h3>⏱</h3><b>60 fps</b><br /><sub>baked light, TAA, DoF, one post pass</sub></td>
 <td align="center" width="25%"><h3>?</h3><b>Hints</b><br /><sub>4 stages × 3 tiers, never spoils</sub></td>
 </tr>
 </table>
@@ -78,8 +82,12 @@
 Three.js, yes — but nothing else is off the shelf.
 
 - **Lighting is not faked.** Every zone is baked in Blender 5.3 with Cycles into its own equirect HDR, then used as `scene.environment` and cross-faded as you cross a threshold. Direct lights and shadows still run live on top, so nothing is nailed to the floor.
-- **A hand-written post chain.** SSAO → separable blur → bright pass → bloom → ACES → split-tone grade → vignette → chromatic aberration → grain → FXAA. One composite pass. No `postprocessing` package.
-- **Materials do the heavy lifting.** Real ambientCG photogrammetry, tinted through a custom shader that also multiplies in world-space grime and a floor-level dirt band. That is why the plaster has water staining and the floor is dark where you walk.
+- **A hand-written post chain, all of it.** SSAO at half res → two-scale bloom (a tight core at ¼, a wide haze at ⅛) → ACES → split-tone grade → vignette → **depth of field focused on the reticle** → **TAA with a sub-pixel Halton jitter and depth reprojection** → grain and chromatic aberration. No `postprocessing` package, no FXAA — temporal accumulation is what actually kills the edge shimmer.
+- **Materials do the heavy lifting.** Real ambientCG photogrammetry, tinted through a custom shader that also multiplies in world-space grime, vertical runoff and a floor-level dirt band. That is why the plaster has water staining and the floor is dark where you walk.
+- **Decals are drawn at runtime.** A 2048² canvas atlas of sixteen tiles — water damage, rust runs, drips, stencils, taped notes, mould, boot scuffs, a torn schematic — stamped onto walls *by raycast*, so they follow the geometry and never float. Every decal in the station merges into **one draw call**.
+- **The station is plumbed.** Conduit loops, ceiling pipe bundles with hangers, junction boxes, drop cables and air bricks are generated from each room's own floor polygon, and the runs are cut where a doorway is — tested by firing a ray at the wall.
+- **The air has something in it.** Dust motes wrap in a nine-metre cell around the camera, light shafts hang under the pendants and the dome slit, and the boiler vents steam. Additive geometry, three draw calls.
+- **You have a body.** A brass hand lamp sits low-right in frame, bobbing with the walk cycle and lagging behind your look. It renders in its own scene stamped over the world with a cleared depth buffer — but inside the same post chain, so it is tonemapped and temporally resolved like everything else.
 - **Everything is static-batched.** Thousands of props merge into a handful of geometry batches; the anechoic wedges and tunnel rivets are instanced.
 - **The puzzles are physical.** Valves have pressure. The safe has wheels. The print is developed in a tray, under a safelight, by hand.
 

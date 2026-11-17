@@ -252,6 +252,8 @@ export class Kit {
         ry: ang,
       });
       mesh.castShadow = true;
+      // tagged so the decal pass knows which surfaces are walls
+      mesh.userData.wall = true;
     };
 
     let cursor = 0;

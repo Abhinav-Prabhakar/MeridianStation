@@ -58,7 +58,9 @@ export function buildLights(scene: THREE.Scene): ZoneRig[] {
     shadow = false,
     mapSize = 1024
   ) => {
-    const l = new THREE.SpotLight(color, intensity, dist, angle, penumbra, 1.7);
+    // a global trim: the pools were clipping to white on the wall centres, which
+    // is the fastest way to read as "renderer" rather than "photograph"
+    const l = new THREE.SpotLight(color, intensity * 0.66, dist, angle, penumbra, 1.7);
     l.position.set(x, y, z);
     l.target.position.set(tx, ty, tz);
     scene.add(l.target);
@@ -141,18 +143,24 @@ export function buildLights(scene: THREE.Scene): ZoneRig[] {
     const w3 = spot(0xffd0a4, 34, 6.5, 0.7, 0.55, 20.0, 3.7, -2.6, 20.6, 1.1, -2.6, false);
     const w4 = spot(0xffd0a4, 30, 6.5, 0.7, 0.55, 20.0, 3.7, 2.4, 20.6, 1.1, 2.4, false);
     const scope = point(0x5cff9e, 0.9, 1.8, 18.7, 1.05, -2.35);
-    add("anechoic", [w1, w2, w3, w4, scope]);
+    // the chamber's own working lights: two dim, wide downlights so the far
+    // wall and the ceiling read instead of going to pure black
+    const c1 = spot(0xffd9b8, 16, 7.5, 1.2, 0.9, 16.5, 4.05, -1.6, 16.5, 0, -1.6, false);
+    const c2 = spot(0xffd9b8, 14, 7.5, 1.2, 0.9, 16.5, 4.05, 1.9, 16.5, 0, 1.9, false);
+    add("anechoic", [w1, w2, w3, w4, scope, c1, c2]);
   }
 
   // ---- machine ----------------------------------------------------------
   {
     const f1 = spot(0xc4d6ea, 52, 9, 1.0, 0.7, -2.4, 4.62, 14.4, -2.4, 0, 14.4, true, 1024);
     const f2 = spot(0xc4d6ea, 40, 9, 1.0, 0.7, 2.2, 4.62, 18.8, 2.2, 0, 18.8, false);
-    const bench = point(0xffa855, 4.2, 4.2, -3.4, 1.35, 19.3);
+    const bench = point(0xffa855, 6.4, 4.6, -3.4, 1.35, 19.3);
+    // a second bench lamp on the west wall so the room is not a black half
+    const west = spot(0xffc48a, 14, 6.5, 0.9, 0.8, -5.1, 3.1, 15.2, -4.0, 1.4, 15.2, false);
     // cage lamp over the valve gallery on the east wall
     const valves = spot(0xffd0a0, 26, 6, 0.9, 0.85, 4.4, 4.0, 15.4, 5.4, 1.7, 15.4, true, 1024);
     const god = spot(0xa8c8ff, 70, 11, 0.26, 0.85, 3.6, 4.85, 18.6, 3.0, 0, 16.9, true, 1024);
-    add("machine", [f1, f2, bench, god, valves], (t) => {
+    add("machine", [f1, f2, bench, god, valves, west], (t) => {
       const flick = t % 11 < 0.22 || (t % 11 > 1.05 && t % 11 < 1.13);
       f2.intensity = flick ? 9 : 40;
     });
@@ -160,8 +168,8 @@ export function buildLights(scene: THREE.Scene): ZoneRig[] {
 
   // ---- darkroom ---------------------------------------------------------
   {
-    const safe = point(0xff2a0c, 5.4, 5.0, -15.5, 2.5, 1.62);
-    const safe2 = point(0xff2a0c, 2.6, 4.2, -15.5, 2.5, -1.6);
+    const safe = point(0xff3d1e, 1.15, 3.4, -15.5, 2.5, 1.62);
+    const safe2 = point(0xff3d1e, 0.6, 2.8, -15.5, 2.5, -1.6);
     // dim work light over the developing bench so the trays read
     const bench = point(0xff5a30, 1.5, 2.6, -15.6, 1.6, -2.3);
     add("darkroom", [safe, safe2, bench]);

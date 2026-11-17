@@ -8,9 +8,13 @@ import { buildMaterials, type MatLib } from "./core/materials";
 import { Kit } from "./core/kit";
 import { buildShell } from "./world/shell";
 import { buildDressing, buildLights } from "./world/rooms";
+import { decalMaterial, scatterDecals } from "./world/decals";
+import { buildServices } from "./world/services";
+import { addShaft, buildDust, buildSteam } from "./world/atmosphere";
 import { ZONES, zoneAt } from "./world/layout";
 import { BakedEnv } from "./world/bakedEnv";
 import { Player } from "./player/player";
+import { buildViewmodel } from "./player/viewmodel";
 import { InteractSystem, type InteractEntry } from "./game/interact";
 import { audio } from "./game/audio";
 import { Ui } from "./game/ui";
@@ -139,7 +143,13 @@ async function boot() {
   scene.add(root);
   const kit = new Kit(mats, root);
   buildShell(kit);
+  const serviceRuns = buildServices(kit);
+  console.info(`[meridian] ran ${serviceRuns} service runs`);
   buildDressing(kit);
+
+  // ---- decals: stains, stencils, scuffs, taped paper
+  const decals = scatterDecals(kit, decalMaterial(), ZONES);
+  console.info(`[meridian] stamped ${decals} decals`);
 
   bootBar.style.width = "90%";
   bootStatus.textContent = "cutting draw calls";
@@ -150,11 +160,51 @@ async function boot() {
   // ---- lights
   const rigs = buildLights(scene);
 
+  // ---- atmosphere: motes, beams and boiler steam
+  const dust = buildDust(2400);
+  scene.add(dust.points);
+  const steam = buildSteam(scene);
+  const shafts: THREE.ShaderMaterial[] = [];
+  const beam = (o: Parameters<typeof addShaft>[1]) => {
+    const m = addShaft(scene, o);
+    shafts.push(m.material as THREE.ShaderMaterial);
+  };
+  for (let i = 0; i < 3; i++) {
+    const a = (i * Math.PI * 2) / 3 + 0.6;
+    const x = Math.sin(a) * 3.0;
+    const z = -Math.cos(a) * 3.0;
+    beam({ x, y: 4.32, z, height: 4.3, radius: 2.0, strength: 0.85 });
+  }
+  // the dome slit: one long cold blade of daylight across the anechoic range
+  beam({
+    x: 0,
+    y: 9.2,
+    z: -18.9,
+    height: 7.6,
+    radius: 3.1,
+    color: 0xa8c6ff,
+    strength: 1.15,
+    dir: [0.0, -5.2, 4.7],
+  });
+  // machine hall: the roof-light shaft and the cage lamp over the valves
+  beam({ x: 3.6, y: 4.85, z: 18.6, height: 5.1, radius: 1.7, color: 0xa8c8ff, strength: 1.2, dir: [-0.6, -4.85, -1.7] });
+  beam({ x: 4.4, y: 4.0, z: 15.4, height: 2.5, radius: 1.15, strength: 0.7, dir: [1.0, -2.3, 0.0] });
+  // corridor lamps: short warm cones, just enough to show the air
+  for (const [x, z] of [
+    [0, -9],
+    [9, 0],
+    [0, 9],
+    [-9, 0],
+  ] as const) {
+    beam({ x, y: 3.0, z, height: 3.0, radius: 1.5, strength: 0.45 });
+  }
+
   // ---- baked environments: this room and everything adjacent
   baked.preload(["rotunda", "corr_n", "corr_e", "corr_s", "corr_w"]);
 
   // ---- player
   const player = new Player(camera, scene);
+  const viewmodel = buildViewmodel(camera, mats);
   player.blockers = kit.blockers;
   const interact = new InteractSystem();
 
@@ -283,7 +333,7 @@ async function boot() {
     innerHeight * renderer.getPixelRatio()
   );
   post.setSize(innerWidth * renderer.getPixelRatio(), innerHeight * renderer.getPixelRatio());
-  post.exposure = 0.9;
+  post.exposure = 1.0;
   post.bloom = 0.42;
 
   // ---- dust motes
@@ -442,22 +492,22 @@ async function boot() {
   }
 
   const ENV_INT: Record<string, number> = {
-    rotunda: 0.3,
-    corr_n: 0.28,
-    corr_e: 0.28,
-    corr_s: 0.28,
-    corr_w: 0.28,
-    records: 0.3,
-    stair: 0.28,
-    landing: 0.28,
-    anechoic: 0.26,
-    machine: 0.3,
-    darkroom: 0.42,
-    dome: 0.34,
-    tunnel_a: 0.32,
-    tunnel_b: 0.32,
-    tunnel_c: 0.32,
-    crawl: 0.3,
+    rotunda: 0.46,
+    corr_n: 0.42,
+    corr_e: 0.42,
+    corr_s: 0.42,
+    corr_w: 0.42,
+    records: 0.46,
+    stair: 0.4,
+    landing: 0.4,
+    anechoic: 0.52,
+    machine: 0.44,
+    darkroom: 0.5,
+    dome: 0.48,
+    tunnel_a: 0.46,
+    tunnel_b: 0.46,
+    tunnel_c: 0.46,
+    crawl: 0.42,
   };
   let lastZone = "";
 
@@ -468,6 +518,7 @@ async function boot() {
     fps += (1 / Math.max(dt, 0.0001) - fps) * 0.06;
 
     if (started) player.update(dt);
+    viewmodel.update(dt, player.speed, player.bobPhase, player.yaw, player.pitch, player.flashOn);
 
     const zone = zoneAt(player.pos.x, player.pos.z, player.pos.y);
     setZoneLights(zone?.id ?? null);
@@ -485,6 +536,9 @@ async function boot() {
 
     for (const rig of rigs) rig.tick?.(elapsed);
     baked.update(zone?.id ?? null, ENV_INT[zone?.id ?? ""] ?? 0.28, dt);
+    dust.update(elapsed, camera);
+    steam.update(elapsed, camera.position);
+    for (const m of shafts) m.uniforms.uTime.value = elapsed;
 
     interact.tick(dt);
 
@@ -503,7 +557,15 @@ async function boot() {
       if (ui.inspecting || state.doorOpen) ui.setPrompt(null);
     }
 
-    post.render(scene, camera);
+    // lens focus: whatever the reticle is on, else a slow drift to 4 m
+    if (current) {
+      const d = current.point.distanceTo(camera.position);
+      post.focus += (Math.min(9, Math.max(1.1, d)) - post.focus) * Math.min(1, dt * 5);
+    } else {
+      post.focus += (6.0 - post.focus) * Math.min(1, dt * 1.2);
+    }
+
+    post.render(scene, camera, viewmodel.scene);
   }
   frame();
 }
@@ -544,7 +606,8 @@ function mergeStatic(root: THREE.Group): number {
     for (const g of geos) g.dispose();
     if (!merged) continue;
     const mesh = new THREE.Mesh(merged, mat);
-    mesh.castShadow = true;
+    // alpha-blended batches (decals) must not write into the shadow map
+    mesh.castShadow = !mat.transparent;
     mesh.receiveShadow = true;
     root.add(mesh);
     n += geos.length;
