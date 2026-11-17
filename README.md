@@ -124,7 +124,13 @@ npm run dev      # http://localhost:5173
 npm run build    # static bundle in dist/
 ```
 
-No API keys, no backend, no analytics. Textures and HDRs ship in `public/` (~59 MB of assets, 219 kB of app code gzipped).
+No API keys, no backend, no analytics. Textures and HDRs live in `docs/` (~59 MB of assets, 219 kB of app code gzipped) — that folder *is* the published site, so a deploy is a build and a commit:
+
+```bash
+npm run deploy   # build → docs/ → push main
+```
+
+One branch. No CI. GitHub Pages serves `docs/` straight off `main`.
 
 <details>
 <summary><b>Re-bake the lighting</b> (Blender 5.3 + Cycles)</summary>
@@ -132,7 +138,7 @@ No API keys, no backend, no analytics. Textures and HDRs ship in `public/` (~59 
 ```bash
 node scripts/receive.mjs &                       # receiver on :8788
 open "http://localhost:5173/?bake=1"             # page exports zone probes
-blender -b -P scripts/bake.py                    # writes public/bake/*.hdr
+blender -b -P scripts/bake.py                    # writes docs/bake/*.hdr
 ```
 
 `BAKE_W=1024 BAKE_H=512 BAKE_SAMPLES=96`. Roughly four minutes for all eleven zones.
